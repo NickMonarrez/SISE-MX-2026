@@ -145,42 +145,78 @@
             }
         }
 
-        function validar() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            if(!u || !p) {
-                mostrarError("Completa todos los campos");
-                return;
-            }
-            const btn = document.getElementById('btn-login');
-            btn.innerText = "VERIFICANDO...";
-            btn.disabled = true;
+  async function validar() {
+    const u = document.getElementById('user').value.trim();
+    const p = document.getElementById('pass').value.trim();
+    const btn = document.getElementById('btn-login');
+    
+    // URL de tu Script de Google
+    const urlScript = "https://script.google.com/macros/s/AKfycbykRP_ZURtLtCANW_nLYskLcL9j-KA6aUavOxrOeUNZdX9nO5r0qvMyTuWeS-qUelQykg/exec"; 
 
-            google.script.run.withSuccessHandler(function(res) {
-                if(res && res.success) {
-                    userData = res;
-                    renderMenu();
-                } else {
-                    mostrarError("Credenciales incorrectas");
-                    btn.innerText = "ENTRAR";
-                    btn.disabled = false;
-                }
-            }).validarAcceso(u, p);
+    if(!u || !p) {
+        Swal.fire('Atención', 'Completa todos los campos', 'warning');
+        return;
+    }
+
+    btn.innerText = "VERIFICANDO...";
+    btn.disabled = true;
+
+    try {
+        // Usamos POST con text/plain para saltar el bloqueo de CORS
+        const response = await fetch(urlScript, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8', 
+            },
+            body: JSON.stringify({ accion: 'login', usuario: u, pass: p })
+        });
+
+        // Recibimos la respuesta de Google
+        const res = await response.json();
+
+        if(res && res.success) {
+            // Guardamos los datos globalmente
+            userData = res;
+            
+            // NO borramos la pantalla aquí para evitar errores de "null" en renderMenu
+            renderMenu();
+        } else {
+            Swal.fire('Error', 'Usuario o contraseña incorrectos', 'error');
+            btn.innerText = "ENTRAR";
+            btn.disabled = false;
         }
 
-        function cerrarSesion() {
-            userData = null;
-            const zona = document.getElementById('zona-interaccion');
-            zona.innerHTML = `
-                <div class="text-center p-10">
-                    <div class="animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cerrando Sesión Segura...</p>
-                </div>`;
+    } catch (error) {
+        console.error("Detalle del error:", error);
+        // Si sale este error pero la consola muestra que los datos llegaron, 
+        // el problema está dentro de la lógica de renderMenu()
+        Swal.fire('Error de Conexión', 'Hubo un problema al procesar los datos', 'error');
+        btn.innerText = "ENTRAR";
+        btn.disabled = false;
+    }
+}
 
-            google.script.run.withSuccessHandler(function(url) {
-                window.open(url, '_top');
-            }).getScriptUrl();
-        }
+
+function cerrarSesion() {
+    // 1. Limpiamos los datos del usuario en memoria
+    userData = null;
+    
+    // 2. Si usas localStorage para mantener la sesión iniciada, hay que limpiarlo
+    localStorage.removeItem('userSISE'); // O el nombre que uses para guardar la sesión
+
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `
+        <div class="text-center p-10">
+            <div class="animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cerrando Sesión Segura...</p>
+        </div>`;
+
+    // 3. En lugar de google.script.run, simplemente recargamos la página
+    // Esto limpia todo el estado de la app y vuelve al login automáticamente
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000); // Le damos 1 segundo para que se vea la animación de cierre
+}
 
                 // AQUI CAMBIAS EL NOMBRE DEL PLANTEL
         function renderMenu() {
