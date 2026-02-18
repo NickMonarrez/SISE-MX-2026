@@ -151,7 +151,7 @@
     const btn = document.getElementById('btn-login');
     
     // URL de tu Script de Google
-    const urlScript = "https://script.google.com/macros/s/AKfycbykRP_ZURtLtCANW_nLYskLcL9j-KA6aUavOxrOeUNZdX9nO5r0qvMyTuWeS-qUelQykg/exec"; 
+    const urlScript = "https://script.google.com/macros/s/AKfycbxfv2lXln3Nt40jYlOUYkfjNMqDpPb6LSqCex74DxFlF5UYmkxq91IUlIy3r19DcAr-/exec"; 
 
     if(!u || !p) {
         Swal.fire('Atención', 'Completa todos los campos', 'warning');
