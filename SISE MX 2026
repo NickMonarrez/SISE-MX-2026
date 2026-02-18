@@ -56,7 +56,7 @@
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
-    <div class="glass p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] w-full max-w-md transition-all duration-500">
+    <div class="glass p-6 sm:p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] w-[92%] max-w-[400px] transition-all duration-500">
 
         <div id="pantalla-dinamica">
             <div class="text-center">
@@ -145,13 +145,13 @@
             }
         }
 
-  async function validar() {
+async function validar() {
     const u = document.getElementById('user').value.trim();
     const p = document.getElementById('pass').value.trim();
     const btn = document.getElementById('btn-login');
     
     // URL de tu Script de Google
-    const urlScript = "https://script.google.com/macros/s/AKfycbxfv2lXln3Nt40jYlOUYkfjNMqDpPb6LSqCex74DxFlF5UYmkxq91IUlIy3r19DcAr-/exec"; 
+    const urlScript = "https://script.google.com/macros/s/AKfycbwPRcQNEVKlCqkCWv00hAbwWSfsrmOTrl3JJnPfR572tMvs76UtL3aDzZRddfGpWlZf/exec"; 
 
     if(!u || !p) {
         Swal.fire('Atención', 'Completa todos los campos', 'warning');
@@ -195,7 +195,6 @@
         btn.disabled = false;
     }
 }
-
 
 function cerrarSesion() {
     // 1. Limpiamos los datos del usuario en memoria
