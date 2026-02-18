@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+            margin: 0;
+            display: flex;
+            align-items: center;    
+            justify-content: center; 
+            min-height: 100vh;      
+            width: 100%;
+            /* ESTO ARREGLA EL SCROLL EN HORIZONTAL */
+            overflow-y: auto; 
+            padding: 10px 0;
+        }
+        
+        .glass { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+        }
+
+        .shine-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .shine-effect::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.8s;
+        }
+        
+        .shine-effect:hover::after {
+            left: 100%;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #8b8a5d; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="glass p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] w-full max-w-md transition-all duration-500">
+
+        <div id="pantalla-dinamica">
+            <div class="text-center">
+                <h1 class="text-5xl font-black text-[#8b8a5d] mb-1 tracking-tighter">SISE<span class="text-slate-300 font-light">MX</span></h1>
+                <p class="text-slate-400 text-[10px] mb-8 italic uppercase tracking-[0.3em] font-bold">Sistema de Identificación Segura Escolar</p>
+                
+                <h2 id="titulo-seccion" class="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Acceso al Sistema</h2>
+                <div id="barra" class="h-1 w-16 bg-[#8b8a5d] mx-auto mt-3 rounded-full transition-all duration-1000"></div>
+            </div>
+
+            <div id="zona-interaccion" class="mt-8 space-y-4">
+                <div id="mensaje-error" class="hidden bg-rose-50 text-rose-500 text-[10px] font-bold p-4 rounded-2xl text-center border border-rose-100 animate-bounce uppercase"></div>
+                
+                <div class="space-y-3">
+                    <input type="text" id="user" placeholder="USUARIO (MATRICULA)" class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-[#8b8a5d] outline-none text-sm uppercase font-bold tracking-wider shadow-sm transition-all">
+                    
+                    <div class="relative">
+                        <input type="password" id="pass" placeholder="CONTRASEÑA" class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-transparent focus:bg-white focus:border-[#8b8a5d] outline-none text-sm font-bold tracking-wider shadow-sm transition-all">
+                        <button type="button" onclick="togglePass()" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#8b8a5d] transition-colors">
+                            <svg id="ojo-icono" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="btn-login" onclick="validar()" class="shine-effect group relative w-full flex items-center gap-4 p-2 bg-gradient-to-r from-[#888c65] to-[#a3a87e] rounded-[2rem] shadow-lg shadow-[#888c65]/20 active:scale-[0.97] transition-all border-none cursor-pointer">
+                    <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl shadow-inner">
+                        <i class="fa-solid fa-right-to-bracket text-white"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-[11px] font-black text-white uppercase tracking-[0.15em]">Entrar</p>
+                        <p class="text-[8px] text-white/70 uppercase font-bold tracking-tighter">Acceso Seguro</p>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                </button>
+
+                <div class="flex flex-col gap-4 items-center pt-6 px-2">
+                    <button onclick="mostrarPantallaRegistro()" class="group relative w-full flex items-center gap-4 p-2 bg-gradient-to-r from-[#b8c1cc] to-[#9ea9b5] rounded-[2rem] shadow-md active:scale-[0.97] transition-all border border-white/30">
+                        <div class="w-10 h-10 bg-[#5d6144]/10 rounded-full flex items-center justify-center text-md">
+                            <i class="fa-solid fa-user-plus text-slate-700"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-[9px] font-black text-slate-700 uppercase tracking-[0.1em]">Nuevo Registro</p>
+                            <p class="text-[7px] text-slate-500 uppercase font-bold tracking-tighter">Crear cuenta</p>
+                        </div>
+                    </button>
+                    
+                    <button onclick="mostrarRecuperacion()" class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-[#888c65] transition-all border-b border-transparent hover:border-[#888c65] pb-1">
+                        ¿Olvidaste tu Contraseña?
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <p class="mt-12 text-[8px] text-slate-300 text-center uppercase tracking-[0.4em] font-bold italic">SISE MX™ · © 2026 Todos los derechos reservados.</p>
+    </div>
+</body>
+</html>
+
+    <script>
+        let userData = null;
+
+        // TUS FUNCIONES EXACTAS SIN CAMBIOS DE LÓGICA
+        function togglePass() {
+            const input = document.getElementById('pass');
+            const icono = document.getElementById('ojo-icono');
+            if (input.type === "password") {
+                input.type = "text";
+                icono.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.822 7.822L21 21m-7.822-7.822l-1.101-1.101m-.037-4.857a3 3 0 114.242 4.242" />';
+            } else {
+                input.type = "password";
+                icono.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />';
+            }
+        }
+
+        function mostrarError(msg) {
+            const errDiv = document.getElementById('mensaje-error');
+            if (errDiv) {
+                errDiv.innerText = "⚠️ " + msg;
+                errDiv.classList.remove('hidden');
+                setTimeout(() => { errDiv.classList.add('hidden'); }, 3000);
+            } else {
+                alert("⚠️ " + msg);
+            }
+        }
+
+        function validar() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            if(!u || !p) {
+                mostrarError("Completa todos los campos");
+                return;
+            }
+            const btn = document.getElementById('btn-login');
+            btn.innerText = "VERIFICANDO...";
+            btn.disabled = true;
+
+            google.script.run.withSuccessHandler(function(res) {
+                if(res && res.success) {
+                    userData = res;
+                    renderMenu();
+                } else {
+                    mostrarError("Credenciales incorrectas");
+                    btn.innerText = "ENTRAR";
+                    btn.disabled = false;
+                }
+            }).validarAcceso(u, p);
+        }
+
+        function cerrarSesion() {
+            userData = null;
+            const zona = document.getElementById('zona-interaccion');
+            zona.innerHTML = `
+                <div class="text-center p-10">
+                    <div class="animate-spin w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cerrando Sesión Segura...</p>
+                </div>`;
+
+            google.script.run.withSuccessHandler(function(url) {
+                window.open(url, '_top');
+            }).getScriptUrl();
+        }
+
+                // AQUI CAMBIAS EL NOMBRE DEL PLANTEL
+        function renderMenu() {
+            document.getElementById('titulo-seccion').innerText = "PLANTEL CONALEP NAVOLATO";
+            document.getElementById('barra').classList.replace('w-16', 'w-full');
+           
+            let html = `
+                <p class="text-center text-[10px] text-green-700 mb-6 italic uppercase font-black tracking-widest bg-green-50 py-1 rounded-full">${userData.rol}</p>
+                <div class="grid grid-cols-1 gap-3">
+            `;
+
+            if(userData.rol === 'ADMIN_GENERAL' || userData.rol === 'PREFECTO') {
+                html += `
+<button onclick="abrirEscaner()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#b8c1cc] to-[#ced6e0] rounded-full shadow-lg active:scale-95 transition-all border-none cursor-pointer">
+    <div class="w-8 h-8 rounded-full bg-[#8c9bb0] flex items-center justify-center text-white text-xs shadow-inner">📸</div>
+    <span class="text-[10px] font-black text-[#1e293b] uppercase tracking-[0.25em]">Escáner Biométrico</span>
+</button>
+            </button>
+<button onclick="irARegistrosBiometricos()" class="w-full mt-4 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#767a58] rounded-full shadow-lg active:scale-95 transition-all border-none cursor-pointer">
+    <div class="w-8 h-8 rounded-full bg-[#b8c1cc] flex items-center justify-center text-white text-xs shadow-inner">🧬</div>
+    <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Registros Biométricos</span>
+</button>
+<button onclick="verAsistencias()" class="w-full mt-4 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#1e293b] to-[#334155] rounded-full shadow-lg active:scale-95 transition-all border-none cursor-pointer">
+    <div class="w-8 h-8 rounded-full bg-[#3b82f6] flex items-center justify-center text-white text-xs shadow-inner">📊</div>
+    <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Control de Asistencias</span>
+</button>
+                    <div class="grid grid-cols-2 gap-3">
+                    
+<button onclick="abrirFormularioIncidencias()" class="bg-red-50 text-red-600 border border-red-100 p-4 rounded-[1.5rem] font-black text-[9px] uppercase tracking-tighter active:scale-95 transition-all shadow-sm flex flex-col items-center gap-1">
+            <span class="text-lg">⚠️</span>
+            Generar Incidencias
+        </button>
+
+                    <button onclick="abrirVisualizadorReportes()" class="bg-amber-50 text-amber-600 border border-amber-100 p-4 rounded-[1.5rem] font-black text-[9px] uppercase tracking-tighter active:scale-95 transition-all shadow-sm flex flex-col items-center gap-1">
+                     <span class="text-lg">🔍</span>
+                     Visualizar Reportes
+                    </button>
+                    </div>
+                `;
+            } else if(userData.rol === 'PADRE O TUTOR') {
+                html += `
+                <div class="space-y-3">
+                    <button onclick="alert('Redirigiendo...')" class="w-full bg-green-600 text-white p-4 rounded-3xl font-black shadow-md uppercase text-[10px] tracking-widest">📱 Registrar en la App</button>
+                        <button onclick="verUltimaAsistencia()" class="w-full bg-green-600 text-white p-4 rounded-3xl font-black shadow-md uppercase text-[10px] tracking-widest">📅  Registro de Entradas/Salidas
+                        </button>
+                    <button onclick="verAsistenciasHijo()" class="w-full bg-blue-600 text-white p-4 rounded-3xl font-black shadow-md uppercase text-[10px] tracking-widest">Ver Asistencias</button>
+                    <div class="grid grid-cols-2 gap-3">
+<button onclick="verNotificacionesHijo()" class="flex items-center justify-center gap-2 bg-indigo-600 text-white p-3 rounded-2xl shadow-sm active:scale-95 transition-all">
+        <span class="text-sm">🔔</span>
+        <span class="text-[10px] font-black uppercase tracking-tighter">Notificaciones</span>
+    </button>
+
+    <button onclick="verIncidenciasHijo()" class="flex items-center justify-center gap-2 bg-red-600 text-white p-3 rounded-2xl shadow-sm active:scale-95 transition-all">
+        <span class="text-sm">⚠️</span>
+        <span class="text-[10px] font-black uppercase tracking-tighter">Incidencias</span>
+    </button>
+
+                    </div>
+                `;
+            }
+
+            html += `
+                <button onclick="cerrarSesion()" class="w-full mt-6 text-[10px] text-red-500 font-black uppercase underline tracking-tighter hover:text-red-700 transition-colors">Cerrar Sesión Segura</button>
+                </div>
+            `;
+            document.getElementById('zona-interaccion').innerHTML = html;
+        }
+
+function abrirEscaner() {
+    const zona = document.getElementById('zona-interaccion');
+    // Definimos la URL fuera para que no se mezcle con el HTML del botón
+    const urlEscaner = "https://script.google.com/macros/s/AKfycbzhJt0Y2tuyJsEQn7OVoA8AMPreHzK94vQ49WBcTI1Iw9x1ETfYBnyJQybuboy3W27a/exec";
+
+    zona.innerHTML = `
+        <div class="text-center p-10">
+            <div class="animate-spin w-10 h-10 border-[4px] border-[#888c65] border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p class="text-[10px] font-black text-gray-500 uppercase animate-pulse tracking-widest">Iniciando Sensor Biométrico...</p>
+        </div>`;
+    
+    setTimeout(() => {
+        zona.innerHTML = `
+            <div class="rounded-2xl overflow-hidden border border-gray-100 shadow-inner bg-black" style="height: 400px;">
+                <iframe 
+                    src="${urlEscaner}" 
+                    style="width:100%; height:100%; border:none;" 
+                    allow="camera; microphone; autoplay; display-capture; encrypted-media" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+        `;
+    }, 500);
+}
+
+        function irARegistrosBiometricos() {
+            const zona = document.getElementById('zona-interaccion');
+            zona.innerHTML = `
+                <div class="text-center p-10">
+                    <div class="animate-spin w-10 h-10 border-[4px] border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p class="text-[10px] font-black text-gray-500 uppercase animate-pulse tracking-widest">Abriendo Panel de Registros...</p>
+                </div>`;
+            
+            setTimeout(() => {
+                const urlRegistro = "https://script.google.com/macros/s/AKfycbw9qLupeUel0UlFISYyWDPqhGYlleDdJzupGccgYwU0S4b55ysR-OdfPA5sXFpzA94Y/exec";
+                zona.innerHTML = `
+                    <div class="rounded-2xl overflow-hidden border border-gray-100 shadow-inner bg-black" style="height: 450px;">
+                        <iframe src="${urlRegistro}" style="width:100%;height:100%;border:none" allow="camera;microphone;autoplay;encrypted-media" allowfullscreen></iframe>
+                    </div>
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+    
+   
+    <div class="text-left relative z-10">
+        <p class="text-[11px] font-black text-white uppercase tracking-[0.15em] m-0">Volver al Menú</p>
+        <p class="text-[8px] text-white/70 uppercase font-bold tracking-tighter m-0">Panel Principal</p>
+    </div>
+
+</button>
+                `;
+            }, 500);
+        }
+
+function verAsistencias(fechaManual = null) {
+    const zona = document.getElementById('zona-interaccion');
+    
+    // Si no se pasa fecha, usamos la de hoy por defecto
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    const fechaParaConsultar = fechaManual || fechaHoy;
+
+    zona.innerHTML = `
+        <div class="text-center p-10">
+            <div class="animate-spin w-10 h-10 border-[4px] border-[#15803d] border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest italic">Sincronizando con el servidor...</p>
+        </div>`;
+
+    // Pasamos la fecha a la función del servidor
+    google.script.run.withSuccessHandler(function(res) {
+        if(res && res.success) {
+            let grupos = [...new Set(res.alumnos.map(a => a.grupo))].filter(g => g).sort();
+            
+            // --- NUEVO: SECCIÓN DE CALENDARIO ---
+            let htmlCalendario = `
+                <div class="bg-slate-50 p-4 rounded-3xl mb-4 border border-slate-100 shadow-inner">
+                    <p class="text-[8px] font-black text-[#8b8a5d] uppercase tracking-widest text-center mb-2">Seleccionar Fecha de Consulta</p>
+                    <div class="flex gap-2">
+                        <input type="date" id="fecha-asistencia" 
+                            value="${fechaParaConsultar}"
+                            class="flex-1 bg-white border-none rounded-xl px-4 py-2 text-[10px] font-black text-slate-700 outline-none shadow-sm focus:ring-2 focus:ring-[#15803d]">
+                        <button onclick="verAsistencias(document.getElementById('fecha-asistencia').value)" 
+                            class="bg-[#15803d] text-white px-4 rounded-xl shadow-md active:scale-95 transition-all">
+                            <i class="fas fa-search text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            let htmlResumen = `
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="bg-white p-2 rounded-xl border border-gray-100 shadow-sm text-center">
+                        <p class="text-[7px] font-black text-gray-400 uppercase tracking-tighter">1er Sem</p>
+                        <p class="text-lg font-black text-green-700">${res.resumen.sem1}</p>
+                    </div>
+                    <div class="bg-white p-2 rounded-xl border border-gray-100 shadow-sm text-center">
+                        <p class="text-[7px] font-black text-gray-400 uppercase tracking-tighter">3er Sem</p>
+                        <p class="text-lg font-black text-blue-700">${res.resumen.sem3}</p>
+                    </div>
+                    <div class="bg-white p-2 rounded-xl border border-gray-100 shadow-sm text-center">
+                        <p class="text-[7px] font-black text-gray-400 uppercase tracking-tighter">5to Sem</p>
+                        <p class="text-lg font-black text-orange-600">${res.resumen.sem5}</p>
+                    </div>
+                    <div class="bg-[#15803d] p-2 rounded-xl shadow-md text-center">
+                        <p class="text-[7px] font-black text-white/70 uppercase tracking-tighter">Total Día</p>
+                        <p class="text-lg font-black text-white">${res.resumen.granTotal}</p>
+                    </div>
+                </div>
+            `;
+
+            let htmlFiltros = `
+                <div id="contador-grupo" class="hidden bg-slate-100 p-2 mb-3 rounded-xl text-center border border-slate-200">
+                     <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Asistencias del Grupo</p>
+                     <p id="total-grupo" class="text-xl font-black text-slate-800">0</p>
+                </div>
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="busq" onkeyup="ejecutarFiltro()" placeholder="🔍 BUSCAR NOMBRE..." class="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-[10px] font-bold outline-none uppercase shadow-sm">
+                    <select id="selGrupo" onchange="ejecutarFiltro()" class="w-1/3 px-2 py-2 rounded-xl border border-gray-200 text-[9px] font-black text-gray-600 outline-none shadow-sm">
+                        <option value="">GRUPOS</option>
+                        ${grupos.map(g => `<option value="${g}">${g}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+
+            let htmlLista = `
+                <div class="bg-white rounded-2xl shadow-inner border border-gray-100 overflow-hidden">
+                    <div class="bg-slate-800 text-white p-3 text-[9px] font-black flex justify-between px-5 italic tracking-widest uppercase">
+                        <span>Alumno (Clic para detalles)</span>
+                        <span>Estatus</span>
+                    </div>
+                    <div class="overflow-y-auto custom-scroll" style="max-height: 250px;">
+                        <table class="w-full text-[10px]" id="tablaAlumnos">
+                            <tbody class="divide-y divide-gray-50">
+                                ${res.alumnos.map(al => `
+                                    <tr onclick="verReporteDetallado('${al.matricula}')" 
+                                        class="fila-alumno hover:bg-emerald-50 transition-all cursor-pointer active:bg-emerald-100" 
+                                        data-grupo="${al.grupo}" 
+                                        data-asistencia="${al.asistencia}">
+                                        <td class="p-4 uppercase font-bold text-slate-700">
+                                            <div class="flex flex-col">
+                                                <span>${al.nombre}</span>
+                                                <span class="text-[7px] font-black text-emerald-600 mt-0.5 tracking-tighter">GRUPO: ${al.grupo}</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 text-center">
+                                            <span class="text-xs inline-block">${al.asistencia}</span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            zona.innerHTML = `
+                <h3 class="text-[10px] font-black mb-3 uppercase text-[#15803d] text-center tracking-widest">Control de Asistencias Navolato</h3>
+                ${htmlCalendario}
+                ${htmlResumen}
+                ${htmlFiltros}
+                ${htmlLista}
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+            `;
+        }
+    }).obtenerAsistenciasNavolato(fechaParaConsultar); // <-- Enviamos la fecha al servidor
+}
+
+        function ejecutarFiltro() {
+            let n = document.getElementById("busq").value.toUpperCase();
+            let g = document.getElementById("selGrupo").value;
+            let filas = document.getElementsByClassName("fila-alumno");
+            let contDiv = document.getElementById("contador-grupo");
+            let totalTxt = document.getElementById("total-grupo");
+            let asistenciasGrupo = 0;
+
+            for (let i = 0; i < filas.length; i++) {
+                let txt = filas[i].innerText.toUpperCase();
+                let grupoFila = filas[i].getAttribute("data-grupo");
+                let asistio = filas[i].getAttribute("data-asistencia") === "✅";
+                let matchNombre = txt.includes(n);
+                let matchGrupo = (g === "" || grupoFila === g);
+                
+                if (matchNombre && matchGrupo) {
+                    filas[i].style.display = "";
+                    if (asistio) asistenciasGrupo++;
+                } else {
+                    filas[i].style.display = "none";
+                }
+            }
+
+            if (g !== "") {
+                contDiv.classList.remove('hidden');
+                totalTxt.innerText = asistenciasGrupo;
+            } else {
+                contDiv.classList.add('hidden');
+            }
+        }
+        
+function abrirFormularioIncidencias() {
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `<p class="text-center p-10 animate-pulse text-[10px] font-black uppercase">Obteniendo menús de Excel...</p>`;
+
+    google.script.run.withSuccessHandler(function(listas) {
+        let datalistHtml = listas.nombres.map(n => `<option value="${n}">`).join('');
+        let optInc = listas.incidencias.map(i => `<option value="${i}">${i}</option>`).join('');
+        let optRep = listas.reporta.map(r => `<option value="${r}">${r}</option>`).join('');
+        let optAti = listas.atiende.map(a => `<option value="${a}">${a}</option>`).join('');
+        let optAten = listas.atenciones.map(ate => `<option value="${ate}">${ate}</option>`).join('');
+
+        zona.innerHTML = `
+            <div class="p-4 max-w-md mx-auto bg-white rounded-3xl shadow-lg border border-gray-100">
+                <h3 class="text-[11px] font-black text-red-700 uppercase mb-4 text-center tracking-widest">Captura de Incidencias</h3>
+                
+                <div id="status-msg" class="hidden mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-[10px] font-bold text-center animate-bounce">
+                    ✅ ¡Registro guardado exitosamente!
+                </div>
+
+                <div class="space-y-3 text-left">
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-400 uppercase ml-2">Nombre del Alumno</label>
+                        <input list="listaAlumnos" id="inc-nombre" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-[11px] outline-none focus:ring-2 focus:ring-red-500 transition-all">
+                        <datalist id="listaAlumnos">${datalistHtml}</datalist>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                           <label class="text-[9px] font-bold text-gray-400 uppercase ml-2 text-[8px]">Incidencia</label>
+                           <select id="inc-tipo" class="w-full px-2 py-3 rounded-xl border border-gray-200 text-[10px]">${optInc}</select>
+                        </div>
+                        <div>
+                           <label class="text-[9px] font-bold text-gray-400 uppercase ml-2 text-[8px]">Reporta</label>
+                           <select id="inc-reporta" class="w-full px-2 py-3 rounded-xl border border-gray-200 text-[10px]">${optRep}</select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-400 uppercase ml-2">Atiende</label>
+                        <select id="inc-atiende" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-[10px]">${optAti}</select>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-400 uppercase ml-2">Atención Realizada</label>
+                        <select id="inc-atencion" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-[10px]">${optAten}</select>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-400 uppercase ml-2 text-[8px]">Observaciones (Opcional)</label>
+                        <input type="text" id="inc-otro" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-[10px]" placeholder="...">
+                    </div>
+                    
+<button onclick="enviarIncidencia()" id="btn-save" class="w-full mt-2 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#e11d48] to-[#fb7185] rounded-full shadow-lg shadow-rose-500/20 active:scale-95 transition-all border-none cursor-pointer">
+    <div class="w-8 h-8 rounded-full bg-[#9f1239] flex items-center justify-center text-white text-xs shadow-inner">💾</div>
+    <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Guardar Registro</span>
+</button>
+                    
+                    <hr class="my-2 border-gray-100">
+
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+                </div>
+            </div>
+        `;
+    }).obtenerListasIncidencias();
+}
+
+function enviarIncidencia() {
+    const btn = document.getElementById('btn-save');
+    const msg = document.getElementById('status-msg');
+    const nombre = document.getElementById('inc-nombre');
+    const otro = document.getElementById('inc-otro');
+
+    if(!nombre.value) return alert("Selecciona un alumno");
+
+    const datos = {
+        nombre: nombre.value,
+        incidencia: document.getElementById('inc-tipo').value,
+        reporta: document.getElementById('inc-reporta').value,
+        atiende: document.getElementById('inc-atiende').value,
+        atencion: document.getElementById('inc-atencion').value,
+        otro: otro.value
+    };
+
+    btn.innerText = "PROCESANDO...";
+    btn.disabled = true;
+    btn.classList.add('opacity-50');
+
+    google.script.run.withSuccessHandler(function() {
+        // 1. Mostramos el mensaje discreto
+        msg.classList.remove('hidden');
+        
+        // 2. Restauramos el botón
+        btn.innerText = "GUARDAR REGISTRO";
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+
+        // 3. Limpiamos campos clave para seguir capturando
+        nombre.value = "";
+        otro.value = "";
+        nombre.focus();
+
+        // 4. Desvanecemos el mensaje de éxito después de 3 segundos
+        setTimeout(() => {
+            msg.classList.add('hidden');
+        }, 3000);
+
+    }).guardarIncidenciaEnSheet(datos);
+}
+
+function abrirVisualizadorReportes() {
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `<p class="text-center p-10 animate-pulse text-[10px] font-black uppercase text-gray-400">Cargando alumnos y reportes...</p>`;
+
+    google.script.run.withSuccessHandler(function(data) {
+        window.todosLosRegistros = data.historial;
+        
+        // Datalist con la lista completa de la Hoja "Base de datos"
+        let opcionesDatalist = data.listaCompleta.map(n => `<option value="${n}">`).join('');
+
+        zona.innerHTML = `
+            <div class="max-w-md mx-auto animate-fade-in">
+                <div class="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 mb-4 text-center">
+                    <div class="flex flex-col items-center mb-4">
+                        <span class="text-2xl mb-1">🔍</span>
+                        <h3 class="text-[12px] font-extrabold text-gray-800 uppercase tracking-tight">Consultar Historial</h3>
+                        <p class="text-[8px] text-gray-400 font-bold uppercase">Escribe el nombre del alumno</p>
+                    </div>
+                    
+                    <div class="relative">
+                        <input list="listaBusquedaCompleta" id="buscador-alumno" oninput="filtrarPorNombre()" 
+                            class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-amber-500 transition-all" 
+                            placeholder="BUSCAR ALUMNO...">
+                        
+                        <datalist id="listaBusquedaCompleta">
+                            ${opcionesDatalist}
+                        </datalist>
+                    </div>
+                </div>
+                
+                <div id="contenedor-reportes" class="overflow-y-auto max-h-[350px] pr-2 custom-scroll space-y-3">
+                    <div class="flex flex-col items-center justify-center p-10 opacity-20">
+                         <p class="text-[9px] font-black uppercase italic text-center">Selecciona un nombre para ver sus registros</p>
+                    </div>
+                </div>
+
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+            </div>
+        `;
+    }).consultarReportes();
+}
+
+// ESTA ES LA FUNCIÓN QUE TE DABA ERROR (Ya está aquí incluida)
+function generarTarjetasHTML(lista) {
+    if (lista.length === 0) return "";
+    
+    return lista.map(reg => `
+        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-amber-500 animate-fade-in">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[8px] font-black text-gray-400 uppercase">${reg.fecha}</span>
+                <span class="bg-amber-100 text-amber-700 text-[8px] px-2 py-0.5 rounded-lg font-black uppercase">${reg.grupo}</span>
+            </div>
+            
+            <h4 class="text-[10px] font-black text-gray-800 uppercase mb-2 leading-tight">${reg.nombre}</h4>
+            
+            <div class="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                <div class="flex items-center gap-1 mb-1">
+                    <span class="text-[7px] bg-red-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">Incidencia</span>
+                    <span class="text-[9px] font-bold text-red-600 uppercase">${reg.incidencia}</span>
+                </div>
+                <p class="text-[9px] text-gray-600 leading-tight">
+                    <b class="text-gray-400 uppercase text-[7px]">Atención:</b> ${reg.atencion || 'Sin registro'}
+                </p>
+                ${reg.otro ? `<p class="text-[8px] text-blue-600 mt-1 font-bold italic border-t border-gray-200 pt-1">Nota: ${reg.otro}</p>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function filtrarPorNombre() {
+    const valorInput = document.getElementById('buscador-alumno').value.trim().toUpperCase();
+    const contenedor = document.getElementById('contenedor-reportes');
+    
+    if (!valorInput) {
+        contenedor.innerHTML = `<p class="text-center text-[9px] text-gray-400 font-bold p-10 uppercase italic">Escribe el nombre del alumno</p>`;
+        return;
+    }
+
+    // Filtramos buscando coincidencia exacta
+    const filtrados = window.todosLosRegistros.filter(reg => reg.nombre.toUpperCase() === valorInput);
+    
+    if (filtrados.length > 0) {
+        contenedor.innerHTML = generarTarjetasHTML(filtrados);
+    } else {
+        // Mensaje discreto si el alumno no tiene reportes (esperamos a que escriba un poco más)
+        if (valorInput.length > 10) {
+            contenedor.innerHTML = `
+                <div class="p-10 text-center opacity-40">
+                    <p class="text-[9px] font-black text-gray-500 uppercase italic">Este alumno no cuenta con incidencias registradas aún.</p>
+                </div>`;
+        }
+    }
+}
+// Esta función ahora controla tanto el botón de "Asistencias" como el de "Entradas y Salidas"
+function verRegistroPadre(fecha = null) {
+    const matricula = userData ? userData.usuario : null;
+
+    if (!matricula) {
+        alert("⚠️ Error: Sesión no válida.");
+        return;
+    }
+
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `
+        <div class="text-center p-10 animate-fade-in">
+            <div class="inline-block animate-spin w-10 h-10 border-[3px] border-blue-500 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cargando Expediente...</p>
+        </div>`;
+
+    // Llamamos a la nueva función del servidor
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res || res.error) {
+            zona.innerHTML = `<div class="p-10 text-center"><p class="text-red-500 font-black text-[10px] uppercase">${res ? res.error : 'No hay datos'}</p><button onclick="renderMenu()" class="mt-4 bg-gray-100 px-6 py-2 rounded-xl text-[9px] font-black uppercase">Volver</button></div>`;
+            return;
+        }
+        renderizarVistaPadreModerna(res);
+      })
+      .obtenerExpedientePadre(matricula, fecha);
+}
+
+function renderizarVistaPadreModerna(res) {
+    const zona = document.getElementById('zona-interaccion');
+    
+    zona.innerHTML = `
+        <div class="max-w-md mx-auto animate-fade-in px-1">
+            <p class="text-[9px] font-black text-gray-400 text-center mb-5 tracking-[0.2em] uppercase italic">Registro Acumulado del Alumno</p>
+
+            <div class="bg-white rounded-[2.5rem] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-blue-50/50 mb-6 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16"></div>
+                
+                <div class="relative z-10 text-center">
+                    <h4 class="text-[12px] font-black text-slate-800 uppercase mb-1">${res.nombre}</h4>
+                    <p class="text-[8px] font-bold text-blue-500 mb-5 uppercase tracking-wider">${res.grupo} | MAT: ${res.matricula}</p>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-emerald-50 border border-emerald-100/50 rounded-3xl p-4 transition-transform active:scale-95">
+                            <span class="block text-3xl font-black text-emerald-600">${res.totalAsistencias}</span>
+                            <span class="text-[7px] font-black text-emerald-700/40 uppercase tracking-widest">Asistencias</span>
+                        </div>
+                        <div class="bg-rose-50 border border-rose-100/50 rounded-3xl p-4 transition-transform active:scale-95">
+                            <span class="block text-3xl font-black text-rose-600">${res.totalFaltas}</span>
+                            <span class="text-[7px] font-black text-rose-700/40 uppercase tracking-widest">Faltas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-100/50 backdrop-blur-md rounded-[2rem] p-3 border border-white shadow-sm mb-6">
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1 group">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <input type="date" value="${res.fechaConsulta}" onchange="verRegistroPadre(this.value)" 
+                               class="w-full bg-white pl-11 pr-4 py-3 rounded-2xl border-none text-[11px] font-bold text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+                    </div>
+                    <button onclick="verRegistroPadre(null)" class="bg-white text-blue-600 h-[44px] px-4 rounded-2xl font-black text-[9px] shadow-sm hover:bg-blue-600 hover:text-white transition-all uppercase tracking-tighter">Hoy</button>
+                </div>
+            </div>
+
+            <p class="text-[9px] font-black text-slate-400 mb-4 tracking-widest uppercase text-center italic">Movimientos del Día</p>
+
+            <div class="space-y-3 mb-6 max-h-[350px] overflow-y-auto custom-scroll pr-1">
+                ${res.movimientos.length > 0 ? res.movimientos.map(mov => `
+                    <div class="flex items-center gap-4 bg-white p-3 rounded-[1.8rem] shadow-sm border border-slate-50 transition-all hover:shadow-md">
+                        <div class="w-14 h-14 rounded-[1.2rem] overflow-hidden shadow-sm flex-shrink-0 border-2 border-slate-50">
+                            <img src="${mov.foto}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/100?text=S/F'">
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[7px] font-black px-2 py-0.5 rounded-full ${mov.tipo === 'ENTRADA' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'} uppercase tracking-tighter">
+                                    ${mov.tipo}
+                                </span>
+                                <span class="text-[7px] font-bold text-slate-300 uppercase tracking-tighter italic">Registro Oficial</span>
+                            </div>
+                            <p class="text-[10px] font-bold text-slate-600 leading-[1.1]">
+                                Registrado el <span class="text-blue-500">${mov.fecha}</span> a las <span class="text-blue-500">${mov.hora}</span>.
+                            </p>
+                        </div>
+                    </div>
+                `).join('') : `
+                    <div class="text-center py-12 bg-white/50 rounded-[2rem] border-2 border-dashed border-slate-200">
+                        <p class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300">Sin movimientos este día</p>
+                    </div>
+                `}
+            </div>
+
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+        </div>
+    `;
+}
+
+
+function verReporteDetallado(matricula) {
+    const zona = document.getElementById('zona-interaccion');
+    window.vistaPreviaGeneral = zona.innerHTML; 
+
+    zona.innerHTML = `
+        <div class="text-center p-10 animar-reporte">
+            <div class="inline-block animate-spin w-10 h-10 border-[3px] border-blue-600 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Generando Expediente...</p>
+        </div>`;
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res.error) {
+            alert("⚠️ " + res.error);
+            zona.innerHTML = window.vistaPreviaGeneral;
+            return;
+        }
+
+        let listaHtml = res.asistencias.reverse().map(a => `
+            <div class="flex justify-between items-center bg-white p-3 mb-2 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                    <span class="text-[10px] font-bold text-gray-600">${a.fecha}</span>
+                </div>
+                <span class="bg-green-100 text-green-700 text-[8px] px-2 py-1 rounded-lg font-black tracking-tighter">ASISTENCIA</span>
+            </div>
+        `).join('');
+
+        zona.innerHTML = `
+            <div class="animar-reporte px-1">
+                <div class="bg-white/80 backdrop-blur-sm rounded-[2.5rem] p-8 text-slate-700 border border-slate-100 shadow-sm relative">
+                    
+                    <div class="flex justify-between items-start mb-6 relative z-10">
+                        <div class="flex-1 pr-4">
+                            <h3 class="text-[14px] font-black uppercase leading-tight text-slate-800">${res.nombre}</h3>
+                            <p class="text-[9px] font-bold text-blue-500 uppercase tracking-widest mt-1">${res.grupo} | MAT: ${matricula}</p>
+                        </div>
+                        
+<div class="w-20 h-20 rounded-full border-4 border-white shadow-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+    <img src="${res.fotoUrl || 'https://via.placeholder.com/150'}" 
+         class="w-full h-full object-cover"
+         onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('${res.nombre}') + '&background=EBF4FF&color=7F9CF5'">
+</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 relative z-10">
+                        <div class="bg-white/50 backdrop-blur-sm p-4 rounded-3xl border border-white text-center shadow-sm">
+                            <span class="block text-3xl font-black text-green-500">${res.asistencias.length}</span>
+                            <span class="text-[7px] uppercase font-black text-gray-400 tracking-widest">Asistencias</span>
+                        </div>
+                        <div class="bg-white/50 backdrop-blur-sm p-4 rounded-3xl border border-white text-center shadow-sm">
+                            <span class="block text-3xl font-black text-red-500">${res.faltas}</span>
+                            <span class="text-[7px] uppercase font-black text-gray-400 tracking-widest">Faltas a Hoy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-[9px] font-black text-gray-400 uppercase ml-4 mt-6 mb-3 tracking-widest italic">Historial de registros:</p>
+
+                <div class="max-h-[250px] overflow-y-auto px-1 custom-scroll mb-6">
+                    ${listaHtml || '<div class="text-center py-10 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200"><p class="text-gray-400 text-[9px] font-bold uppercase italic">Sin asistencias a la fecha</p></div>'}
+                </div>
+
+                <button onclick="verAsistencias()" class="w-full bg-[#f0f4ff] text-[#4338ca] py-5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-3 border border-blue-100">
+                    🏠 VOLVER A ASISTENCIAS
+                </button>
+            </div>`;
+      })
+      .obtenerAsistenciasAlumno(matricula);
+}
+
+
+function regresarALista() {
+    const zona = document.getElementById('zona-interaccion');
+    
+    // 1. Intentamos restaurar desde la memoria temporal
+    if (window.vistaPreviaGeneral && window.vistaPreviaGeneral.trim() !== "") {
+        zona.innerHTML = window.vistaPreviaGeneral;
+        
+        // OPCIONAL: Si después de volver los filtros (buscar por nombre) no funcionan,
+        // puedes llamar aquí a la función que inicializa los buscadores si la tienes.
+        return; 
+    } 
+    
+    // 2. Si la memoria falló, forzamos el regreso al menú principal o 
+    // a la función que carga las asistencias de Navolato
+    if (typeof mostrarAsistenciasNavolato === "function") {
+        mostrarAsistenciasNavolato(); 
+    } else {
+        renderMenu(); // Esta es la función estándar de tu app para volver al inicio
+    }
+}
+function verIncidenciasHijo() {
+    if (!userData || !userData.usuario) {
+        alert("No se encontró la matrícula del alumno.");
+        return;
+    }
+
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `
+        <div class="text-center p-10 animar-reporte">
+            <div class="inline-block animate-spin w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-[10px] font-black text-gray-400 uppercase">Buscando reportes de incidencia...</p>
+        </div>`;
+
+    // Llamamos a una nueva función en el servidor
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (res.error) {
+                zona.innerHTML = `<p class="text-center p-10 text-red-500 font-bold text-[10px] uppercase">${res.error}</p>`;
+                return;
+            }
+
+            let htmlIncidencias = res.historial.map(inc => `
+                <div class="bg-white p-4 mb-3 rounded-2xl border-l-4 border-red-500 shadow-sm animar-reporte">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[8px] font-black text-gray-400 uppercase">${inc.fecha}</span>
+                        <span class="bg-red-100 text-red-700 text-[7px] px-2 py-0.5 rounded-full font-black uppercase">${inc.atencion}</span>
+                    </div>
+                    <p class="text-[10px] font-black text-gray-800 uppercase mb-1">${inc.incidencia}</p>
+                    <p class="text-[9px] text-gray-500 leading-tight italic">"${inc.otro || 'Sin descripción adicional'}"</p>
+                </div>
+            `).join('');
+
+            zona.innerHTML = `
+                <div class="animar-reporte">
+                    <div class="bg-red-600 p-5 rounded-[2rem] text-white mb-4 shadow-lg">
+                        <h3 class="text-[11px] font-black uppercase">Reporte de Incidencias</h3>
+                        <p class="text-[8px] opacity-80 uppercase">${res.nombre}</p>
+                        <div class="mt-3 bg-white/20 p-3 rounded-xl text-center border border-white/10">
+                            <span class="block text-xl font-black">${res.historial.length}</span>
+                            <span class="text-[7px] uppercase font-bold text-red-100">Reportes registrados</span>
+                        </div>
+                    </div>
+
+                    <div class="max-h-[300px] overflow-y-auto px-1 custom-scroll">
+                        ${htmlIncidencias || `
+                            <div class="text-center py-10 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                                <p class="text-gray-400 text-[9px] font-bold uppercase italic">El alumno no cuenta con incidencias registradas</p>
+                            </div>
+                        `}
+                    </div>
+
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+</button>
+                </div>
+            `;
+        })
+        .obtenerIncidenciasAlumno(userData.usuario);
+}
+function verNotificacionesHijo() {
+    var zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = '<p class="text-center p-10 text-[10px] font-black uppercase text-gray-400 animate-pulse">Cargando mensajes...</p>';
+    
+    // Llamada al servidor
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (res.error) {
+                zona.innerHTML = '<p class="text-center p-10 text-red-500 text-[9px] font-bold uppercase">' + res.error + '</p>';
+                return;
+            }
+
+            // Si no hay mensajes
+            if (!res.lista || res.lista.length === 0) {
+                zona.innerHTML = '<div class="text-center p-10"><p class="text-[9px] font-black text-gray-400 uppercase">No tienes notificaciones nuevas</p><button onclick="renderMenu()" class="mt-4 bg-gray-800 text-white px-4 py-2 rounded-xl text-[9px]">VOLVER</button></div>';
+                return;
+            }
+
+            // Construir la lista de mensajes
+            var tarjetas = res.lista.map(function(n) {
+                return '<div class="bg-white p-4 mb-3 rounded-2xl border border-indigo-50 shadow-sm">' +
+                       '<p class="text-[8px] font-black text-indigo-400 mb-1 uppercase">' + n.fecha + '</p>' +
+                       '<p class="text-[10px] font-bold text-gray-700 leading-tight">' + n.mensaje + '</p>' +
+                       '</div>';
+            }).join('');
+
+zona.innerHTML = `
+    <div class="animar-reporte">
+        <div class="bg-indigo-600 p-5 rounded-[2rem] text-white mb-4 shadow-lg text-center">
+            <h3 class="text-[11px] font-black uppercase tracking-widest">Notificaciones</h3>
+        </div>
+
+        <div class="max-h-[300px] overflow-y-auto px-1 custom-scroll">
+            ${tarjetas}
+        </div>
+
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+    </div>
+`;
+        })
+        .obtenerNotificacionesHijo(userData.usuario); // <-- Verifica que userData.usuario tenga la matrícula
+}
+function actualizarBurbujasPadre() {
+    if (!userData || !userData.usuario) return;
+
+    google.script.run.withSuccessHandler(function(res) {
+        const bInci = document.getElementById('burbuja-inci');
+        if (bInci && res.success && res.historial && res.historial.length > 0) {
+            bInci.innerText = res.historial.length;
+            bInci.classList.remove('hidden');
+        }
+    }).obtenerIncidenciasAlumno(userData.usuario);
+}
+// Variable global para guardar los datos y filtrar sin volver al servidor
+let datosAsistenciaGlobal = [];
+
+function verUltimaAsistencia() {
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `<div class="text-center p-12"><div class="animate-spin h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full inline-block mb-4"></div><p class="text-[9px] font-black text-gray-400 uppercase">Consultando Datos...</p></div>`;
+
+    // Primero obtenemos el expediente (para nombre y totales)
+    google.script.run.withSuccessHandler(function(datosExpediente) {
+        
+        // Luego obtenemos el historial de fotos y movimientos
+        google.script.run.withSuccessHandler(function(resHistorial) {
+            if (!resHistorial.success) {
+                zona.innerHTML = `<div class="p-10 text-center uppercase text-[10px] font-bold text-gray-400">${resHistorial.error}</div>`;
+                return;
+            }
+            // Combinamos ambos resultados en un solo objeto para el render
+            const datosCompletos = {
+                ...datosExpediente,
+                lista: resHistorial.lista
+            };
+            renderizarVistaHistorial(datosCompletos);
+        }).obtenerHistorialAsistencias(userData.usuario);
+
+    }).obtenerExpedientePadre(userData.usuario);
+}
+
+function renderizarVistaHistorial(datos) {
+    const zona = document.getElementById('zona-interaccion');
+    window.datosGlobalesAlu = datos; 
+    window.vistaActual = 'asistencia'; // Por defecto empieza en asistencias
+
+    // 1. Clasificar registros y añadir ICONOS visuales
+    window.historialAsistencias = '';
+    window.historialSalidas = '';
+    
+    if (datos.lista && datos.lista.length > 0) {
+        datos.lista.forEach(function(item) {
+            const esSalida = item.tipo.toLowerCase().includes('salida');
+            const icono = esSalida ? '🟠' : '🟢';
+            const colorTexto = esSalida ? 'text-orange-500' : 'text-emerald-500';
+            
+            let html = `
+                <div class="tarjeta-registro flex items-center bg-white/70 backdrop-blur-md p-3 rounded-2xl border border-slate-100 shadow-sm mb-3" data-fecha="${item.fechaFiltro}">
+                    <div class="w-11 h-11 rounded-xl overflow-hidden border-2 border-white shadow-sm mr-3 flex-shrink-0">
+                        <img src="${item.fotoUrl || 'https://via.placeholder.com/50'}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] font-bold text-slate-700 leading-tight">${item.mensaje}</p>
+                        <p class="text-[7px] font-black ${colorTexto} uppercase mt-1 tracking-widest">${icono} ${item.tipo}</p>
+                    </div>
+                </div>`;
+            
+            if (esSalida) { window.historialSalidas += html; } 
+            else { window.historialAsistencias += html; }
+        });
+    }
+
+    // 2. Listado de Faltas con Icono Rojo
+    let faltasHTML = '';
+    if (datos.fechasFaltas && datos.fechasFaltas.length > 0) {
+        datos.fechasFaltas.forEach(fecha => {
+            faltasHTML += `
+                <div class="tarjeta-registro flex items-center bg-rose-50/50 p-3 rounded-2xl border border-rose-100 mb-2">
+                    <span class="mr-3">🔴</span>
+                    <p class="text-[10px] font-bold text-rose-700 uppercase">Falta: ${fecha}</p>
+                </div>`;
+        });
+    }
+    window.historialFaltas = faltasHTML || `<div class="card-vacia"><h4>Sin faltas a la fecha actual</h4></div>`;
+
+    // 3. Renderizado de Estructura
+    zona.innerHTML = `
+    <div class="max-w-md mx-auto animate-fade-in pb-32">
+        <div class="px-5 mb-4 mt-2">
+            <h2 class="text-[14px] font-black text-slate-800 uppercase">${datos.nombre}</h2>
+            <p class="text-[9px] font-bold text-blue-500 tracking-widest uppercase">${datos.grupo}</p>
+        </div>
+
+        <div class="px-4 mb-4 flex gap-2">
+            <div class="relative flex-1 bg-slate-100 rounded-xl border border-slate-200 h-10 flex items-center px-3">
+                <span class="text-sm mr-2">📅</span>
+                <input type="date" id="filtroCalendario" onchange="filtrarPorFecha()" 
+                    class="bg-transparent border-none text-[11px] font-bold text-slate-600 outline-none w-full">
+            </div>
+            <button onclick="verTodoHistorial()" class="bg-slate-800 text-white px-4 rounded-xl text-[9px] font-black uppercase">Historial</button>
+        </div>
+
+        <div class="flex gap-1.5 px-4 mb-4">
+            <div id="tab-asist" onclick="cambiarPestaña('asistencia')" class="flex-1 bg-white border-b-4 border-emerald-500 p-2 text-center cursor-pointer transition-all">
+                <span class="block text-lg font-black text-emerald-600">${datos.totalAsistencias || 0}</span>
+                <span class="text-[7px] font-black text-slate-400 uppercase leading-none">Consultar<br>Asistencias</span>
+            </div>
+            <div id="tab-salid" onclick="cambiarPestaña('salida')" class="flex-1 bg-white border-b-4 border-transparent p-2 text-center cursor-pointer transition-all">
+                <span class="block text-lg font-black text-orange-600">${datos.totalSalidas || 0}</span>
+                <span class="text-[7px] font-black text-slate-400 uppercase leading-none">Consultar<br>Salidas</span>
+            </div>
+            <div id="tab-falt" onclick="cambiarPestaña('falta')" class="flex-1 bg-white border-b-4 border-transparent p-2 text-center cursor-pointer transition-all">
+                <span class="block text-lg font-black text-rose-600">${datos.totalFaltas || 0}</span>
+                <span class="text-[7px] font-black text-slate-400 uppercase leading-none">Consultar<br>Faltas</span>
+            </div>
+        </div>
+
+        <h3 id="titulo-seccion" class="px-5 text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Consultar Asistencias</h3>
+
+        <div class="px-4">
+            <div id="display-contenido" class="contenedor-scroll-v">
+                ${window.historialAsistencias || '<div class="card-vacia"><h4>Sin registros de asistencia</h4></div>'}
+            </div>
+        </div>
+
+            <button onclick="renderMenu()" class="w-full mt-6 flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-[#888c65] to-[#b8c1cc] rounded-full shadow-lg active:scale-95 transition-all">
+                <div class="w-8 h-8 rounded-full bg-[#5d6144] flex items-center justify-center text-white text-xs shadow-inner">🏠</div>
+                <span class="text-[10px] font-black text-white uppercase tracking-[0.25em]">Volver al Menú</span>
+            </button>
+            </button>
+        </div>
+    </div>`;
+}
+
+function cambiarPestaña(tipo) {
+    window.vistaActual = tipo;
+    const display = document.getElementById('display-contenido');
+    const titulo = document.getElementById('titulo-seccion');
+    
+    // Resetear indicadores
+    const tabs = { 'asistencia': 'tab-asist', 'salida': 'tab-salid', 'falta': 'tab-falt' };
+    const colores = { 'asistencia': '#10b981', 'salida': '#f59e0b', 'falta': '#f43f5e' };
+    
+    Object.values(tabs).forEach(id => document.getElementById(id).style.borderColor = 'transparent');
+    document.getElementById(tabs[tipo]).style.borderColor = colores[tipo];
+
+    if (tipo === 'asistencia') {
+        display.innerHTML = window.historialAsistencias || '<div class="card-vacia"><h4>Sin registros de asistencia</h4></div>';
+        titulo.innerText = 'Consultar Asistencias';
+    } else if (tipo === 'salida') {
+        display.innerHTML = window.historialSalidas || '<div class="card-vacia"><h4>Sin registros de salida</h4></div>';
+        titulo.innerText = 'Consultar Salidas';
+    } else {
+        display.innerHTML = window.historialFaltas;
+        titulo.innerText = 'Consultar Faltas';
+    }
+    
+    // Al cambiar de pestaña, si hay fecha puesta, filtrar de nuevo
+    if (tipo !== 'falta') filtrarPorFecha();
+}
+
+function filtrarPorFecha() {
+    const fecha = document.getElementById('filtroCalendario').value;
+    if (!fecha || window.vistaActual === 'falta') return;
+
+    const tarjetas = document.querySelectorAll('.tarjeta-registro');
+    let encontrados = 0;
+
+    tarjetas.forEach(t => {
+        if (t.getAttribute('data-fecha') === fecha) {
+            t.style.display = 'flex';
+            encontrados++;
+        } else {
+            t.style.display = 'none';
+        }
+    });
+
+    // Manejo de "No hay registros en esta fecha"
+    const avisoPrevio = document.getElementById('aviso-fecha-vacia');
+    if (avisoPrevio) avisoPrevio.remove();
+
+    if (encontrados === 0) {
+        const div = document.createElement('div');
+        div.id = 'aviso-fecha-vacia';
+        div.className = 'card-vacia';
+        div.innerHTML = '<h4>No hay registros en esta fecha</h4>';
+        document.getElementById('display-contenido').appendChild(div);
+    }
+}
+
+function verTodoHistorial() {
+    document.getElementById('filtroCalendario').value = ''; // Limpiar fecha
+    cambiarPestaña(window.vistaActual); // Recargar pestaña actual sin filtros
+}
+
+
+
+// Modifica el final de tu función obtenerHistorialAsistencias para que sea compatible
+// con lo que intentas renderizar o asegúrate de enviar los datos del expediente.
+// ==========================================
+//   SECCIÓN DE REGISTRO DE CUENTA (UNIFICADA)
+// ==========================================
+
+// 1. PANTALLA DE REGISTRO (HTML DINÁMICO)
+function mostrarPantallaRegistro() {
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `
+        <div class="space-y-4 animar-reporte">
+            <div class="text-center mb-2">
+                <h3 class="font-black text-green-800 text-[11px] uppercase tracking-widest">Crear Cuenta</h3>
+                <div class="h-1 w-8 bg-green-600 mx-auto mt-1 rounded-full"></div>
+            </div>
+            
+            <input type="text" id="reg-mat" placeholder="MATRÍCULA" class="w-full px-5 py-4 rounded-2xl border border-gray-100 outline-none text-xs font-bold uppercase shadow-sm focus:ring-1 focus:ring-green-500">
+            <input type="email" id="reg-mail" placeholder="CORREO" class="w-full px-5 py-4 rounded-2xl border border-gray-100 outline-none text-xs font-bold shadow-sm">
+            
+            <div class="relative flex items-center">
+                <input type="password" id="reg-pass1" placeholder="CONTRASEÑA" class="w-full px-5 py-4 rounded-2xl border border-gray-100 outline-none text-xs font-bold shadow-sm pr-12">
+                <button type="button" onclick="togglePassRegistro('reg-pass1', this)" class="absolute right-3 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-green-600 transition-all focus:outline-none">
+                    <i class="fas fa-eye text-sm"></i>
+                </button>
+            </div>
+
+            <div class="relative flex items-center">
+                <input type="password" id="reg-pass2" placeholder="REPETIR CONTRASEÑA" class="w-full px-5 py-4 rounded-2xl border border-gray-100 outline-none text-xs font-bold shadow-sm pr-12">
+                <button type="button" onclick="togglePassRegistro('reg-pass2', this)" class="absolute right-3 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-green-600 transition-all focus:outline-none">
+                    <i class="fas fa-eye text-sm"></i>
+                </button>
+            </div>
+
+            <button onclick="ejecutarRegistro()" class="w-full bg-green-700 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase text-[10px] tracking-widest mt-2">Finalizar Registro</button>
+            
+            <button onclick="volverAlLogin()" class="w-full mt-4 bg-gray-50 text-gray-600 border-2 border-gray-100 py-4 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-3">
+                <span class="text-base">🏠</span> CANCELAR Y VOLVER
+            </button>
+        </div>
+    `;
+}
+
+// 2. LÓGICA DEL OJITO (PEQUEÑO Y AL MARGEN DERECHO)
+function togglePassRegistro(idInput, btn) {
+    const input = document.getElementById(idInput);
+    const icon = btn.querySelector('i');
+    
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+        btn.classList.add('text-green-600');
+        btn.classList.remove('text-gray-400');
+    } else {
+        input.type = "password";
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+        btn.classList.remove('text-green-600');
+        btn.classList.add('text-gray-400');
+    }
+}
+
+// 3. FUNCIÓN DE REDIRECCIÓN (USA TU REFERENCIA RENDERMENU)
+function volverAlLogin() {
+    const zona = document.getElementById('zona-interaccion');
+    // Restauramos el HTML original del Login
+    zona.innerHTML = `
+        <div id="mensaje-error" class="hidden bg-red-50 text-red-600 text-[10px] font-bold p-3 rounded-xl text-center border border-red-100 animate-bounce uppercase"></div>
+        
+        <div class="space-y-3">
+            <input type="text" id="user" placeholder="USUARIO (MATRICULA)" class="w-full px-5 py-4 rounded-2xl border border-gray-200 outline-none text-sm focus:ring-2 focus:ring-green-500 uppercase font-medium shadow-sm">
+            
+            <div class="relative">
+                <input type="password" id="pass" placeholder="CONTRASEÑA" class="w-full px-5 py-4 rounded-2xl border border-gray-200 outline-none text-sm focus:ring-2 focus:ring-green-500 font-medium shadow-sm">
+                <button type="button" onclick="togglePass()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+        </div>
+        <button id="btn-login" onclick="validar()" class="w-full bg-green-700 hover:bg-green-800 text-white font-black py-4 rounded-2xl shadow-lg btn-hover uppercase tracking-widest text-sm mt-4">Entrar</button>
+        
+        <div class="flex justify-between items-center pt-2 px-1 mt-4">
+            <button onclick="mostrarPantallaRegistro()" class="text-[9px] font-black text-green-700 uppercase tracking-tighter hover:text-green-900 transition-colors">
+                Crear cuenta nueva
+            </button>
+            <div class="h-3 w-[1px] bg-gray-200"></div>
+            <button onclick="mostrarRecuperacion()" class="text-[9px] font-black text-gray-400 uppercase tracking-tighter hover:text-green-700 transition-colors">
+                ¿Olvidaste tu clave?
+            </button>
+        </div>
+    `;
+    
+    // Opcional: Resetear el título si cambió
+    document.getElementById('titulo-seccion').innerText = "Acceso al Sistema";
+}
+
+// 4. EJECUCIÓN DE REGISTRO (CON NOTIFICACIÓN ESTÉTICA)
+function ejecutarRegistro() {
+    const mat = document.getElementById('reg-mat').value;
+    const mail = document.getElementById('reg-mail').value;
+    const p1 = document.getElementById('reg-pass1').value;
+    const p2 = document.getElementById('reg-pass2').value;
+
+    if (!mat || !mail || !p1 || !p2) {
+        Swal.fire({ 
+            icon: 'warning', 
+            title: 'Campos vacíos', 
+            text: 'Por favor, llena toda la información.', 
+            confirmButtonColor: '#15803d' 
+        });
+        return;
+    }
+
+    if (p1 !== p2) {
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Error', 
+            text: 'Las contraseñas no coinciden.', 
+            confirmButtonColor: '#15803d' 
+        });
+        return;
+    }
+
+    Swal.fire({ 
+        title: 'Guardando datos...', 
+        allowOutsideClick: false, 
+        didOpen: () => { Swal.showLoading() } 
+    });
+
+    google.script.run.withSuccessHandler(res => {
+        Swal.close();
+        if (res.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Registro Exitoso!',
+                text: res.mensaje,
+                confirmButtonColor: '#15803d',
+                confirmButtonText: 'ENTRAR AHORA'
+            }).then(() => {
+                volverAlLogin(); // Llama a la redirección al cerrar el mensaje
+            });
+        } else {
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Error', 
+                text: res.mensaje, 
+                confirmButtonColor: '#15803d' 
+            });
+        }
+    }).registrarPapaPorPrimeraVez(mat, mail, p1);
+}
+// PASO 1: Solicitar Código
+function mostrarRecuperacion() {
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `
+        <div class="space-y-4 animar-reporte">
+            <div class="text-center mb-2">
+                <h3 class="font-black text-green-800 text-[11px] uppercase tracking-widest">Recuperar Acceso</h3>
+                <div class="h-1 w-8 bg-green-600 mx-auto mt-1 rounded-full"></div>
+                <p class="text-gray-400 text-[9px] font-bold mt-2">Enviaremos un código al correo registrado.</p>
+            </div>
+            
+            <input type="text" id="rec-mat" placeholder="MATRÍCULA DEL ALUMNO" class="w-full px-5 py-4 rounded-2xl border border-gray-100 outline-none text-xs font-bold uppercase shadow-sm focus:ring-1 focus:ring-green-500">
+            
+            <button onclick="ejecutarSolicitudCodigo()" class="w-full bg-green-700 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase text-[10px] tracking-widest mt-2">Enviar Código</button>
+            
+            <button onclick="volverAlLogin()" class="w-full mt-2 text-gray-400 font-bold py-2 text-[9px] uppercase tracking-widest hover:text-green-700">✕ Cancelar</button>
+        </div>
+    `;
+}
+
+// PASO 2: Ingresar Código y Nueva Clave
+function mostrarPantallaNuevaClave(matricula) {
+    const zona = document.getElementById('zona-interaccion');
+    zona.innerHTML = `
+        <div class="space-y-4 animar-reporte">
+            <div class="text-center mb-2">
+                <h3 class="font-black text-green-800 text-[11px] uppercase tracking-widest">Establecer Nueva Clave</h3>
+                <p class="text-[9px] text-green-600 font-bold">Código enviado a tu correo</p>
+            </div>
+            
+            <input type="text" id="rec-token" placeholder="CÓDIGO DE 6 DÍGITOS" class="w-full px-5 py-4 rounded-2xl border border-green-100 outline-none text-center text-lg font-black tracking-[0.5em] text-green-700 shadow-sm">
+            
+            <div class="relative flex items-center">
+                <input type="password" id="new-pass" placeholder="NUEVA CONTRASEÑA" class="w-full px-5 py-4 rounded-2xl border border-gray-100 outline-none text-xs font-bold shadow-sm pr-12">
+                <button type="button" onclick="togglePassRegistro('new-pass', this)" class="absolute right-3 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-green-600 focus:outline-none">
+                    <i class="fas fa-eye text-sm"></i>
+                </button>
+            </div>
+
+            <button onclick="ejecutarCambioClave('${matricula}')" class="w-full bg-green-700 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase text-[10px] tracking-widest">Actualizar Contraseña</button>
+        </div>
+    `;
+}
+// Función para pedir el código al servidor
+function ejecutarSolicitudCodigo() {
+    const mat = document.getElementById('rec-mat').value;
+    if (!mat) {
+        Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingresa la matrícula.', confirmButtonColor: '#15803d' });
+        return;
+    }
+
+    Swal.fire({ title: 'Buscando cuenta...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+    google.script.run.withSuccessHandler(res => {
+        Swal.close();
+        if (res.success) {
+            Swal.fire({ icon: 'success', title: 'Código Enviado', text: res.mensaje, confirmButtonColor: '#15803d' }).then(() => {
+                mostrarPantallaNuevaClave(mat); // Pasamos al paso 2
+            });
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: res.mensaje, confirmButtonColor: '#15803d' });
+        }
+    }).enviarCodigoRecuperacion(mat);
+}
+
+// Función para cambiar la clave finalmente
+function ejecutarCambioClave(matricula) {
+    const token = document.getElementById('rec-token').value;
+    const pass = document.getElementById('new-pass').value;
+
+    if (!token || !pass) {
+        Swal.fire({ icon: 'warning', text: 'Completa todos los campos.', confirmButtonColor: '#15803d' });
+        return;
+    }
+
+    Swal.fire({ title: 'Verificando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+    google.script.run.withSuccessHandler(res => {
+        Swal.close();
+        if (res.success) {
+            Swal.fire({ icon: 'success', title: '¡Listo!', text: 'Tu contraseña ha sido actualizada.', confirmButtonColor: '#15803d' }).then(() => {
+                volverAlLogin(); // Usamos tu función 2 que ya funciona
+            });
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: res.mensaje, confirmButtonColor: '#15803d' });
+        }
+    }).verificarYCambiarPass(matricula, token, pass);
+}
+    </script>
+</body>
+</html>
